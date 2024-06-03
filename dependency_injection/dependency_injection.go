@@ -30,7 +30,7 @@ func NewDependencyInjection() (di *DependencyInjection) {
 func (di *DependencyInjection) Add(dep interface{}) {
 	di.mutex.Lock()
 
-	var t0 = reflect.TypeOf(dep).String()
+	var t0 = "*" + reflect.TypeOf(dep).String()
 	const t1 = ""
 
 	if di.dependencies[t0] == nil {
@@ -50,7 +50,7 @@ func (di *DependencyInjection) Add(dep interface{}) {
 func (di *DependencyInjection) Remove(dep interface{}) {
 	di.mutex.Lock()
 
-	var t0 = reflect.TypeOf(dep).String()
+	var t0 = "*" + reflect.TypeOf(dep).String()
 	const t1 = ""
 
 	delete(di.dependencies[t0], dep)
@@ -84,7 +84,7 @@ func Any[T any](di *DependencyInjection, res *T) error {
 	di.mutex.RLock()
 	defer di.mutex.RUnlock()
 
-	var t0 = reflect.TypeOf(*res).String()
+	var t0 = reflect.TypeOf(res).String()
 	const t1 = ""
 
 	var deps0 = di.dependencies[t0]
