@@ -105,3 +105,8 @@ func Any[T any](di *DependencyInjection, res *T) error {
 	}
 	return ErrDependencyNotFound
 }
+
+// Ptr returns the pointer to any variable. Useful to make reference to values returned by MustAny() or MustNeed()
+func Ptr[T any](val T) *T {
+	return &val
+}
