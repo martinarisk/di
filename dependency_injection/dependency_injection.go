@@ -21,7 +21,9 @@ type DependencyInjection struct {
 func NewDependencyInjection() (di *DependencyInjection) {
 	di = &DependencyInjection{}
 
-	di.dependencies = make(map[string]map[interface{}]struct{})
+	data := make(map[string]map[interface{}]struct{})
+	
+	di.dependencies = &data
 
 	return
 }
@@ -33,15 +35,15 @@ func (di *DependencyInjection) Add(dep interface{}) {
 	var t0 = "*" + reflect.TypeOf(dep).String()
 	const t1 = ""
 
-	if di.dependencies[t0] == nil {
-		di.dependencies[t0] = make(map[interface{}]struct{})
+	if (*di.dependencies)[t0] == nil {
+		(*di.dependencies)[t0] = make(map[interface{}]struct{})
 	}
-	di.dependencies[t0][dep] = struct{}{}
+	(*di.dependencies)[t0][dep] = struct{}{}
 
-	if di.dependencies[t1] == nil {
-		di.dependencies[t1] = make(map[interface{}]struct{})
+	if (*di.dependencies)[t1] == nil {
+		(*di.dependencies)[t1] = make(map[interface{}]struct{})
 	}
-	di.dependencies[t1][dep] = struct{}{}
+	(*di.dependencies)[t1][dep] = struct{}{}
 
 	di.mutex.Unlock()
 }
@@ -53,8 +55,8 @@ func (di *DependencyInjection) Remove(dep interface{}) {
 	var t0 = "*" + reflect.TypeOf(dep).String()
 	const t1 = ""
 
-	delete(di.dependencies[t0], dep)
-	delete(di.dependencies[t1], dep)
+	delete((*di.dependencies)[t0], dep)
+	delete((*di.dependencies)[t1], dep)
 
 	di.mutex.Unlock()
 }
@@ -90,7 +92,7 @@ func Any[T any](di *DependencyInjection, res *T) error {
 	var t0 = reflect.TypeOf(res).String()
 	const t1 = ""
 
-	var deps0 = di.dependencies[t0]
+	var deps0 = (*di.dependencies)[t0]
 	for dep := range deps0 {
 		result, ok := (dep).(T)
 		if ok {
@@ -98,7 +100,7 @@ func Any[T any](di *DependencyInjection, res *T) error {
 			return nil
 		}
 	}
-	var deps1 = di.dependencies[t1]
+	var deps1 = (*di.dependencies)[t1]
 	for dep := range deps1 {
 		result, ok := (dep).(T)
 		if ok {
