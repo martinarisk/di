@@ -106,7 +106,7 @@ func Any[T any](di *DependencyInjection, res *T) error {
 			return nil
 		}
 	}
-	if di != res.(*DependencyInjection) && Any[DependencyInjection](di, di) == nil {
+	if t0 != "*DependencyInjection" && Any[DependencyInjection](di, di) == nil {
 		if di != nil {
 			return Any[T](di, res)
 		}
