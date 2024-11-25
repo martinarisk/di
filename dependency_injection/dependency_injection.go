@@ -113,7 +113,7 @@ func Any[T any](di *DependencyInjection, res *T) error {
 		}
 	}
 	di.info.mutex.RUnlock()
-	if t0 != "*DependencyInjection" && t0 != "**DependencyInjection" && (interface{}(di) != interface{}(*res)) && Any[*DependencyInjection](di, &di) == nil {
+	if t0 != "**dependency_injection.DependencyInjection" && (interface{}(di) != interface{}(*res)) && Any[*DependencyInjection](di, &di) == nil {
 		return Any[T](di, res)
 	}
 	return ErrDependencyNotFound
