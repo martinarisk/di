@@ -12,7 +12,7 @@ di := NewDependencyInjection()
 ```
 ## Adding and Removing Dependencies
 
-Add:
+### Add:
 
 ```go
 di.Add(obj interface{})
@@ -26,7 +26,7 @@ config := NewConfig()
 di.Add(config)
 ```
 
-Remove:
+### Remove:
 ```go
 di.Remove(obj interface{})
 ```
@@ -120,7 +120,7 @@ The DI container supports various lifetimes to manage the lifecycle of dependenc
 Default lifetime. A single instance is shared globally.
 
 ### Scoped:
-A new instance is created for each logical "scope" (e.g., per request). Use NewScopedDependencyInjection.
+A new instance is created for each logical "scope" (e.g., per request). Use `NewScopedDependencyInjection`.
 ```go
 func NewScopedDependencyInjection(di *DependencyInjection) *DependencyInjection
 ```
@@ -130,7 +130,7 @@ scopedDi := NewScopedDependencyInjection(di)
 ```
 
 ### Transient:
-A new instance is created every time the dependency is requested. Use NewTransientDependencyInjection.
+A new instance is created every time the dependency is requested. Use `NewTransientDependencyInjection`.
 ```go
 func NewTransientDependencyInjection(di *DependencyInjection) *DependencyInjection
 ```
@@ -140,7 +140,7 @@ transientDi := NewTransientDependencyInjection(di)
 ```
 
 ### Pooled:
-Maintains a pool of objects that are reused and garbage-collected as needed. Use NewPooledDependencyInjection.
+Maintains a pool of objects that are reused and garbage-collected as needed. Use `NewPooledDependencyInjection`.
 
 ```go
 func NewPooledDependencyInjection(di *DependencyInjection) *DependencyInjection
