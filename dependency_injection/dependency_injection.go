@@ -93,13 +93,12 @@ func (di *DependencyInjection) Remove(dep interface{}) {
 // MustNeed injects a dependency of type T using the given constructor function and
 // panics if the injection is unsuccessful.
 func MustNeed[T any](di *DependencyInjection, newer func(di *DependencyInjection) *T) (result T) {
-	if di.IsTransient() {
-		return *newer(di)
-	}
 	err := Any[T](di, &result)
 	if err != nil {
 		result = *newer(di)
 		di.Add(result)
+	} else if di.IsTransient() {
+		return *newer(di)
 	}
 	return
 }
