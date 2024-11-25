@@ -87,7 +87,6 @@ func Any[T any](di *DependencyInjection, res *T) error {
 		return ErrDependencyNotFound
 	}
 	di.mutex.RLock()
-	defer di.mutex.RUnlock()
 
 	var t0 = reflect.TypeOf(res).String()
 	const t1 = ""
@@ -97,6 +96,7 @@ func Any[T any](di *DependencyInjection, res *T) error {
 		result, ok := (dep).(T)
 		if ok {
 			*res = result
+			di.mutex.RUnlock()
 			return nil
 		}
 	}
@@ -105,9 +105,11 @@ func Any[T any](di *DependencyInjection, res *T) error {
 		result, ok := (dep).(T)
 		if ok {
 			*res = result
+			di.mutex.RUnlock()
 			return nil
 		}
 	}
+	di.mutex.RUnlock()
 	if t0 != "*DependencyInjection" && t0 != "**DependencyInjection" && (interface{}(di) != interface{}(*res)) && Any[*DependencyInjection](di, &di) == nil {
 		return Any[T](di, res)
 	}
