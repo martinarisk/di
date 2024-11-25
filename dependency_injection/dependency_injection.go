@@ -107,7 +107,9 @@ func Any[T any](di *DependencyInjection, res *T) error {
 		}
 	}
 	if Any[DependencyInjection](di, di) == nil {
-		return Any[T](di, res)
+		if di != nil {
+			return Any[T](di, res)
+		}
 	}
 	return ErrDependencyNotFound
 }
