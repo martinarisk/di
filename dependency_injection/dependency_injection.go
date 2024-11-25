@@ -10,55 +10,58 @@ import (
 // ErrDependencyNotFound is returned by Any(...) when no corresponding dependency is found.
 var ErrDependencyNotFound = errors.New("dependency not found")
 
+type dependencyInjection struct {
+	dependencies *map[string]map[interface{}]struct{}
+	mutex sync.RWMutex
+}
+
 // DependencyInjection acts as a container for managing dependencies.
 type DependencyInjection struct {
-	dependencies *map[string]map[interface{}]struct{}
-
-	mutex sync.RWMutex
+	info *dependencyInjection
 }
 
 // NewDependencyInjection initializes and returns a new instance of DependencyInjection.
 func NewDependencyInjection() (di *DependencyInjection) {
-	di = &DependencyInjection{}
+	di = &DependencyInjection{info: &dependencyInjection{}}
 
 	data := make(map[string]map[interface{}]struct{})
 	
-	di.dependencies = &data
+	di.info.dependencies = &data
 
 	return
 }
 
 // Add registers a dependency within the container.
 func (di *DependencyInjection) Add(dep interface{}) {
-	di.mutex.Lock()
+	di.info.mutex.Lock()
 
 	var t0 = "*" + reflect.TypeOf(dep).String()
 	const t1 = ""
 
-	if (*di.dependencies)[t0] == nil {
-		(*di.dependencies)[t0] = make(map[interface{}]struct{})
+	if di.info.dependencies[t0] == nil {
+		di.info.dependencies[t0] = make(map[interface{}]struct{})
 	}
-	(*di.dependencies)[t0][dep] = struct{}{}
+	di.info.dependencies[t0][dep] = struct{}{}
 
-	if (*di.dependencies)[t1] == nil {
-		(*di.dependencies)[t1] = make(map[interface{}]struct{})
+	if di.info.dependencies[t1] == nil {
+		di.info.dependencies[t1] = make(map[interface{}]struct{})
 	}
-	(*di.dependencies)[t1][dep] = struct{}{}
+	di.info.dependencies[t1][dep] = struct{}{}
 
-	di.mutex.Unlock()
+	di.info.mutex.Unlock()
 }
 
 // Remove unregisters a dependency from the container.
 func (di *DependencyInjection) Remove(dep interface{}) {
-	di.mutex.Lock()
+	di.info.mutex.Lock()
 
 	var t0 = "*" + reflect.TypeOf(dep).String()
 	const t1 = ""
 
-	delete((*di.dependencies)[t0], dep)
-	delete((*di.dependencies)[t1], dep)
+	delete(di.info.dependencies[t0], dep)
+	delete(di.info.dependencies[t1], dep)
 
-	di.mutex.Unlock()
+	di.info.mutex.Unlock()
 }
 
 // MustNeed injects a dependency of type T using the given constructor function and
@@ -86,30 +89,30 @@ func Any[T any](di *DependencyInjection, res *T) error {
 	if di == nil {
 		return ErrDependencyNotFound
 	}
-	di.mutex.RLock()
+	di.info.mutex.RLock()
 
 	var t0 = reflect.TypeOf(res).String()
 	const t1 = ""
 
-	var deps0 = (*di.dependencies)[t0]
+	var deps0 = di.info.dependencies[t0]
 	for dep := range deps0 {
 		result, ok := (dep).(T)
 		if ok {
 			*res = result
-			di.mutex.RUnlock()
+			di.info.mutex.RUnlock()
 			return nil
 		}
 	}
-	var deps1 = (*di.dependencies)[t1]
+	var deps1 = di.info.dependencies[t1]
 	for dep := range deps1 {
 		result, ok := (dep).(T)
 		if ok {
 			*res = result
-			di.mutex.RUnlock()
+			di.info.mutex.RUnlock()
 			return nil
 		}
 	}
-	di.mutex.RUnlock()
+	di.info.mutex.RUnlock()
 	if t0 != "*DependencyInjection" && t0 != "**DependencyInjection" && (interface{}(di) != interface{}(*res)) && Any[*DependencyInjection](di, &di) == nil {
 		return Any[T](di, res)
 	}
