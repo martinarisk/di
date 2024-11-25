@@ -33,6 +33,9 @@ func NewDependencyInjection() (di *DependencyInjection) {
 
 // Add registers a dependency within the container.
 func (di *DependencyInjection) Add(dep interface{}) {
+	if di == nil {
+		return
+	}
 	di.info.mutex.Lock()
 
 	var t0 = "*" + reflect.TypeOf(dep).String()
@@ -53,6 +56,9 @@ func (di *DependencyInjection) Add(dep interface{}) {
 
 // Remove unregisters a dependency from the container.
 func (di *DependencyInjection) Remove(dep interface{}) {
+	if di == nil {
+		return
+	}
 	di.info.mutex.Lock()
 
 	var t0 = "*" + reflect.TypeOf(dep).String()
@@ -67,6 +73,9 @@ func (di *DependencyInjection) Remove(dep interface{}) {
 // MustNeed injects a dependency of type T using the given constructor function and
 // panics if the injection is unsuccessful.
 func MustNeed[T any](di *DependencyInjection, newer func(di *DependencyInjection) *T) (result T) {
+	if di == nil {
+		return *newer(di)
+	}
 	err := Any[T](di, &result)
 	if err != nil {
 		result = *newer(di)
