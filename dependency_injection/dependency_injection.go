@@ -12,7 +12,7 @@ var ErrDependencyNotFound = errors.New("dependency not found")
 
 // DependencyInjection acts as a container for managing dependencies.
 type DependencyInjection struct {
-	dependencies map[string]map[interface{}]struct{}
+	dependencies *map[string]map[interface{}]struct{}
 
 	mutex sync.RWMutex
 }
