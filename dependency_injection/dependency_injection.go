@@ -12,6 +12,7 @@ var ErrDependencyNotFound = errors.New("dependency not found")
 
 type dependencyInjection struct {
 	dependencies map[string]map[interface{}]struct{}
+	transient bool
 	mutex sync.RWMutex
 }
 
@@ -31,12 +32,30 @@ func NewDependencyInjection() (di *DependencyInjection) {
 	return
 }
 
+// IsTransient returns whether container is transient, creating new instances for each MustNeed request
+func (di *DependencyInjection) IsTransient() bool {
+	di.info.mutex.RLock()
+	t := di.info.transient
+	di.info.mutex.RUnlock()
+	return t
+}
+
+// SetTransient sets whether container is transient, creating new instances for each MustNeed request
+func (di *DependencyInjection) SetTransient(t bool) {
+	di.info.mutex.Lock()
+	di.info.transient = t
+	di.info.mutex.Unlock()
+	return t
+}
+
 // Add registers a dependency within the container.
 func (di *DependencyInjection) Add(dep interface{}) {
-	if di == nil {
+	di.info.mutex.Lock()
+
+	if di.info.transient {
+		di.info.mutex.Unlock()
 		return
 	}
-	di.info.mutex.Lock()
 
 	var t0 = "*" + reflect.TypeOf(dep).String()
 	const t1 = ""
@@ -56,10 +75,12 @@ func (di *DependencyInjection) Add(dep interface{}) {
 
 // Remove unregisters a dependency from the container.
 func (di *DependencyInjection) Remove(dep interface{}) {
-	if di == nil {
+	di.info.mutex.Lock()
+
+	if di.info.transient {
+		di.info.mutex.Unlock()
 		return
 	}
-	di.info.mutex.Lock()
 
 	var t0 = "*" + reflect.TypeOf(dep).String()
 	const t1 = ""
@@ -73,8 +94,8 @@ func (di *DependencyInjection) Remove(dep interface{}) {
 // MustNeed injects a dependency of type T using the given constructor function and
 // panics if the injection is unsuccessful.
 func MustNeed[T any](di *DependencyInjection, newer func(di *DependencyInjection) *T) (result T) {
-	if di == nil {
-		return *newer(NewDependencyInjection())
+	if di.IsTransient() {
+		return *newer(di)
 	}
 	err := Any[T](di, &result)
 	if err != nil {
