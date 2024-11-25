@@ -74,7 +74,7 @@ func (di *DependencyInjection) Remove(dep interface{}) {
 // panics if the injection is unsuccessful.
 func MustNeed[T any](di *DependencyInjection, newer func(di *DependencyInjection) *T) (result T) {
 	if di == nil {
-		return *newer(di)
+		return *newer(NewDependencyInjection())
 	}
 	err := Any[T](di, &result)
 	if err != nil {
