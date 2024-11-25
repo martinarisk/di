@@ -81,6 +81,9 @@ func MustAny[T any](di *DependencyInjection) (result T) {
 
 // Any assigns a dependency of type T to the provided res pointer.
 func Any[T any](di *DependencyInjection, res *T) error {
+	if di == nil {
+		return ErrDependencyNotFound
+	}
 	di.mutex.RLock()
 	defer di.mutex.RUnlock()
 
