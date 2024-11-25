@@ -9,7 +9,8 @@ It provides thread-safe registration, retrieval, and management of dependencies 
 - **Thread-safe**: Built-in synchronization for concurrent environments.
 - **Flexible**: Easily register, resolve, and remove dependencies.
 - **Supports lazy initialization**: Automatically initialize and register dependencies when needed.
-
+- **Lifetimes**: Singleton (global instance), Transient (each time fresh allocation), Scoped (shared per request or scope), Pooled (maintain a small pool of objects that is auto garbage collected)
+- **Examples**: See below
 ---
 
 ## Installation
@@ -19,6 +20,8 @@ Install the package via `go get`:
 ```bash
 go get github.com/martinarisk/di/dependency_injection
 ```
+
+# Singleton
 
 ## Main module example
 
@@ -200,3 +203,114 @@ func NewConfig() IConfig {
 	return &Config{}
 }
 ```
+
+# Scoped
+
+This will create a new object, every time an object of unique type is requested. Total number of objects created is the number of Execute() calls.
+
+```go
+package main
+
+import (
+	. "github.com/martinarisk/di/dependency_injection"
+)
+
+type ExampleUseCase struct {
+	*DependencyInjection
+}
+
+func (uc *ExampleUseCase) Execute(data string) string {
+
+
+	di := NewScopedDependencyInjection(uc.DependencyInjection)
+
+	// Scoped dependencies (once per request)
+	dep1 := IExampleService(Ptr(MustNeed(di, NewExampleService)))
+	dep2 := IExampleService(Ptr(MustNeed(di, NewExampleService)))
+	
+
+
+	// Use dependencies to perform a task
+	return dep1.DoSomething() + dep2.DoAnotherThing()
+}
+
+func NewUseCase(di *DependencyInjection) *ExampleUseCase {
+	// pass DependencyInjection to handlers pattern
+	return &ExampleUseCase{DependencyInjection: di}
+}
+```
+
+
+# Transient
+
+This will create a new object, every time an object is requested. Total number of objects created is twice the number of Execute() calls (MustNeed used for two instances of NewExampleService).
+
+```go
+package main
+
+import (
+	. "github.com/martinarisk/di/dependency_injection"
+)
+
+type ExampleUseCase struct {
+	*DependencyInjection
+}
+
+func (uc *ExampleUseCase) Execute(data string) string {
+
+
+	di := NewTransientDependencyInjection(uc.DependencyInjection)
+
+	// Transient dependencies (twice per request)
+	dep1 := IExampleService(Ptr(MustNeed(di, NewExampleService)))
+	dep2 := IExampleService(Ptr(MustNeed(di, NewExampleService)))
+	
+
+
+	// Use dependencies to perform a task
+	return dep1.DoSomething() + dep2.DoAnotherThing()
+}
+
+func NewUseCase(di *DependencyInjection) *ExampleUseCase {
+	// pass DependencyInjection to handlers pattern
+	return &ExampleUseCase{DependencyInjection: di}
+}
+```
+
+
+# Pooled
+
+This will maintain a small pool of objects, which will be garbage collected after use automatically.
+
+```go
+package main
+
+import (
+	. "github.com/martinarisk/di/dependency_injection"
+)
+
+type ExampleUseCase struct {
+	*DependencyInjection
+}
+
+func (uc *ExampleUseCase) Execute(data string) string {
+
+
+	di := NewPooledDependencyInjection(uc.DependencyInjection)
+
+	// Pooled dependencies (few times globally)
+	dep1 := IExampleService(Ptr(MustNeed(di, NewExampleService)))
+	dep2 := IExampleService(Ptr(MustNeed(di, NewExampleService)))
+	
+
+
+	// Use dependencies to perform a task
+	return dep1.DoSomething() + dep2.DoAnotherThing()
+}
+
+func NewUseCase(di *DependencyInjection) *ExampleUseCase {
+	// pass DependencyInjection to handlers pattern
+	return &ExampleUseCase{DependencyInjection: di}
+}
+```
+
