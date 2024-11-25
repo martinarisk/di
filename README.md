@@ -26,35 +26,54 @@ go get github.com/martinarisk/di/dependency_injection
 package main
 
 import (
-	"github.com/martinarisk/di/dependency_injection"
+	. "github.com/martinarisk/di/dependency_injection"
+
+	"net/http/httptest"
 )
+
+type IServer interface {
+	RunForever()
+}
+
+type Server struct{}
+
+func (Server) RunForever() {
+
+	// simulate http server running forever
+	select {}
+}
+
+func NewServer(di *DependencyInjection) IServer {
+
+	c := NewController1(di)
+
+	// Register controllers
+	di.Add(c)
+
+	// simulate task
+	go c.ServeHTTP(httptest.NewRecorder(), nil)
+
+	// example
+	return Server{}
+}
 
 func main() {
 	// Initialize the DI container
-	di := dependency_injection.NewDependencyInjection()
+	di := NewDependencyInjection()
 
 	// Register configuration
 	config := NewConfig()
 	di.Add(config)
 
-	// Register services and dependencies
-	di.Add(NewService1(di))
-	di.Add(NewService2(di))
-
-	// Register controllers
-	di.Add(NewController1(di))
-	di.Add(NewController2(di))
-
 	// Start application server
 	server := NewServer(di)
-	di.Add(server)
 	server.RunForever()
 }
 ```
 ## Controller example
 
 ```go
-package controllers
+package main
 
 import (
 	"net/http"
@@ -63,16 +82,26 @@ import (
 )
 
 type ExampleController struct {
-	usecase ExampleUsecase
+	usecase ExampleUseCase
+}
+
+func parse(r *http.Request) string {
+	return "parsed"
 }
 
 func (c *ExampleController) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	println("Serving")
 
 	// parse json
 	data := parse(r)
 
 	// Handle HTTP request using the injected usecase
 	response := c.usecase.Execute(data)
+
+	println("Response:", response)
+
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(response))
 }
 
@@ -87,26 +116,26 @@ func NewController1(di *DependencyInjection) *ExampleController {
 
 
 ```go
-package usecases
+package main
 
 import (
 	. "github.com/martinarisk/di/dependency_injection"
 )
 
 type ExampleUseCase struct {
-	dependency1 ExampleService
-	dependency2 ExampleService
+	dependency1 IExampleService
+	dependency2 IExampleService
 }
 
-func (uc *ExampleUseCase) Execute() string {
+func (uc *ExampleUseCase) Execute(data string) string {
 	// Use dependencies to perform a task
 	return uc.dependency1.DoSomething() + uc.dependency2.DoAnotherThing()
 }
 
 func NewUseCase(di *DependencyInjection) *ExampleUseCase {
 	// Resolve dependencies
-	dep1 := MustNeed(di, NewExampleService)
-	dep2 := MustNeed(di, NewExampleService)
+	dep1 := IExampleService(Ptr(MustNeed(di, NewExampleService)))
+	dep2 := IExampleService(Ptr(MustNeed(di, NewExampleService)))
 	return &ExampleUseCase{
 		dependency1: dep1,
 		dependency2: dep2,
@@ -117,26 +146,57 @@ func NewUseCase(di *DependencyInjection) *ExampleUseCase {
 ## Service example
 
 ```go
-package services
+package main
 
 import (
 	. "github.com/martinarisk/di/dependency_injection"
 )
 
-type ExampleService struct{}
+type ExampleService struct{
+	config IConfig
+}
+
+type IExampleService interface {
+	DoSomething() string
+	DoAnotherThing() string
+}
 
 func (s *ExampleService) DoSomething() string {
 	// Process an incoming request
-	return "Did something"
+	return "Did something with " + s.config.GetVariable() + "\n"
 }
 
 func (s *ExampleService) DoAnotherThing() string {
 	// Process an incoming request
-	return "Did another thing"
+	return "Did another thing with " + s.config.GetVariable() + "\n"
 }
 
-
 func NewExampleService(di *DependencyInjection) *ExampleService {
-	return &ExampleService{}
+
+	config := MustAny[IConfig](di)
+
+	return &ExampleService{config: config}
+}
+```
+
+## Config example
+
+```go
+package main
+
+type Config struct {
+	Variable string
+}
+
+type IConfig interface {
+	GetVariable() string
+}
+
+func (c *Config) GetVariable() string {
+	return "custom variable"
+}
+
+func NewConfig() IConfig {
+	return &Config{}
 }
 ```
