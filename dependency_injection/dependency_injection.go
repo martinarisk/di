@@ -11,7 +11,7 @@ import (
 var ErrDependencyNotFound = errors.New("dependency not found")
 
 type dependencyInjection struct {
-	dependencies *map[string]map[interface{}]struct{}
+	dependencies map[string]map[interface{}]struct{}
 	mutex sync.RWMutex
 }
 
@@ -26,7 +26,7 @@ func NewDependencyInjection() (di *DependencyInjection) {
 
 	data := make(map[string]map[interface{}]struct{})
 	
-	di.info.dependencies = &data
+	di.info.dependencies = data
 
 	return
 }
