@@ -45,7 +45,6 @@ func (di *DependencyInjection) SetTransient(t bool) {
 	di.info.mutex.Lock()
 	di.info.transient = t
 	di.info.mutex.Unlock()
-	return t
 }
 
 // Add registers a dependency within the container.
