@@ -63,19 +63,23 @@ import (
 )
 
 type ExampleController struct {
-	service ExampleService
+	usecase ExampleUsecase
 }
 
 func (c *ExampleController) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Handle HTTP request using the injected service
-	response := c.service.ProcessRequest(r)
+
+	// parse json
+	data := parse(r)
+
+	// Handle HTTP request using the injected usecase
+	response := c.usecase.Execute(data)
 	w.Write([]byte(response))
 }
 
 func NewController1(di *DependencyInjection) *ExampleController {
-	// Resolve the service dependency
-	service := MustNeed(di, NewExampleService)
-	return &ExampleController{service: service}
+	// Resolve the usecase dependency
+	usecase := MustNeed(di, NewUseCase)
+	return &ExampleController{usecase: usecase}
 }
 ```
 
@@ -90,8 +94,8 @@ import (
 )
 
 type ExampleUseCase struct {
-	dependency1 Dependency1
-	dependency2 Dependency2
+	dependency1 ExampleService
+	dependency2 ExampleService
 }
 
 func (uc *ExampleUseCase) Execute() string {
@@ -101,8 +105,8 @@ func (uc *ExampleUseCase) Execute() string {
 
 func NewUseCase(di *DependencyInjection) *ExampleUseCase {
 	// Resolve dependencies
-	dep1 := MustNeed(di, NewDependency1)
-	dep2 := MustNeed(di, NewDependency2)
+	dep1 := MustNeed(di, NewExampleService)
+	dep2 := MustNeed(di, NewExampleService)
 	return &ExampleUseCase{
 		dependency1: dep1,
 		dependency2: dep2,
@@ -121,10 +125,16 @@ import (
 
 type ExampleService struct{}
 
-func (s *ExampleService) ProcessRequest(r *http.Request) string {
+func (s *ExampleService) DoSomething() string {
 	// Process an incoming request
-	return "Processed request"
+	return "Did something"
 }
+
+func (s *ExampleService) DoAnotherThing() string {
+	// Process an incoming request
+	return "Did another thing"
+}
+
 
 func NewExampleService(di *DependencyInjection) *ExampleService {
 	return &ExampleService{}
